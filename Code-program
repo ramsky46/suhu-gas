@@ -1,3 +1,69 @@
-a
-aaa
-aaaaa
+#define BLYNK_PRINT Serial
+#define BLYNK_TEMPLATE_ID           "TMPLNnJsDkzC"
+#define BLYNK_DEVICE_NAME           "Suhu dan Gas"
+
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+#include "DHT.h"
+
+const char* auth = "tSFx5Y8SgQkjK6tBstb6ArpEK1665Flq";
+const char* ssid = "KENDILWESI";
+const char* password = "00640600";
+
+#define DHTPIN 4
+#define DHTTYPE DHT11
+
+int Gas_analog = 2;
+DHT dht(DHTPIN, DHTTYPE);
+BlynkTimer timer;
+
+void sendSensor()
+{
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  Serial.print(F("Humidity: "));
+  Serial.print(h);
+  Serial.print(F("% Temperature: "));
+  Serial.print(t);
+  Serial.println(F("^C"));
+  
+  Blynk.virtualWrite(V5, h);
+  Blynk.virtualWrite(V6, t);
+}
+
+void gas()
+{
+  int g = analogRead(Gas_analog);
+
+  Serial.print(F("Gas sensor: "));
+  Serial.print(g);
+  Serial.println(" ");
+
+  Blynk.virtualWrite(V7, g);
+}
+
+void setup() {
+  Serial.begin(9600);
+  delay(1000);
+
+  Blynk.begin(auth, ssid, password);
+  
+  dht.begin();
+  timer.setInterval(1000L, sendSensor);
+  timer.setInterval(1000L, gas);
+
+}
+
+void loop() {
+  
+  Blynk.run();
+  timer.run();
+
+}
